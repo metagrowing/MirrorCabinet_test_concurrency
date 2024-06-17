@@ -1,0 +1,6 @@
+#!/bin/bash
+rm test.jar
+rm *.class
+javac *.java
+jar -v -f test.jar --manifest META-INF/MANIFEST.MF -c *.class
+ls -l test.jar
