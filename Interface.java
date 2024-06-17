@@ -114,6 +114,8 @@ public class Interface extends JFrame
 			}
 			// if(eligble)
 			repaint();
+		} catch (Exception exc) {
+			exc.printStackTrace();
 		} finally {
 			room.model_lock.unlock();
 		}

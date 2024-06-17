@@ -135,6 +135,8 @@ public void reset(int l)
 			}
 			System.out.println(dir+", "+length+","+x1+","+y1);
 		}
+	} catch (Exception exc) {
+		exc.printStackTrace();
 	} finally {
 		model_lock.unlock();
 	}
@@ -191,6 +193,8 @@ public void reset(int l)
 			Interface.state=0;
 		//	 Graphics2D g2= (Graphics2D)g;
 		//	 g2.fill(new Ellipse2D.Double(0,0,720,720));
+		} catch (Exception exc) {
+			exc.printStackTrace();
 		} finally {
 			model_lock.unlock();
 		}
