@@ -7,9 +7,11 @@ import java.awt.RenderingHints;
 import java.awt.geom.Ellipse2D;
 import java.util.ArrayList;
 import java.util.Random;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class Cabinet 
 {
+	public ReentrantLock model_lock = new ReentrantLock();
 	static int[] size;
 	int[][][][]panes;
 	int[][]objects;
@@ -97,91 +99,101 @@ public class Cabinet
 		}
 public void reset(int l)
 {
-	Random rand=new Random();
-	level=l;
-	size[0]=rand.nextInt((int) (10*Math.sqrt(l+1)))+1;
-	size[1]=rand.nextInt((int) (10*Math.sqrt(l+1)))+1;
-    System.out.println("level "+level);
-	objects=new int[size[0]][size[1]];
-	
-	shape=new Shape[] {new Shape(size[0]/2,size[1]/2,0), new Shape(rand.nextInt(size[0]),rand.nextInt(size[1]),0)};
-	shape[1].color=new Color(255*rand.nextInt(colordepth+1)/colordepth,255*rand.nextInt(colordepth+1)/colordepth,255*rand.nextInt(colordepth+1)/colordepth);
-	panes=new int[2][size[0]][size[1]][2];
-	for(int i=0;i<shape.length;i++)
-	{
-		objects[shape[i].loc[0]][shape[i].loc[1]]=i+1;
-	}
-	for(int i=0;i<l;i++)
-	{
-		int dir=rand.nextInt(2),
-				kind=rand.nextInt(3);
-		if(kind==0)kind=-1;
-		int[]step=new int[2];
-		step[1-dir]=1;
-		int length=size[1-dir]-(int)Math.sqrt( rand.nextInt(size[1-dir]*size[1-dir])-1);
-		System.out.println("size0="+size[0]+", size1="+size[1]+"dir="+dir+", length="+length);
-		int x1=rand.nextInt(size[0]-step[0]*(length-1)),
-				y1=rand.nextInt(size[1]-step[1]*(length-1)),
-						c=rand.nextInt(colors.length);
-		System.out.println("x="+x1+", y="+y1);
-		for(int j=0;j<length;j++)
+	model_lock.lock();
+	try {
+		Random rand=new Random();
+		level=l;
+		size[0]=rand.nextInt((int) (10*Math.sqrt(l+1)))+1;
+		size[1]=rand.nextInt((int) (10*Math.sqrt(l+1)))+1;
+	    System.out.println("level "+level);
+		objects=new int[size[0]][size[1]];
+		
+		shape=new Shape[] {new Shape(size[0]/2,size[1]/2,0), new Shape(rand.nextInt(size[0]),rand.nextInt(size[1]),0)};
+		shape[1].color=new Color(255*rand.nextInt(colordepth+1)/colordepth,255*rand.nextInt(colordepth+1)/colordepth,255*rand.nextInt(colordepth+1)/colordepth);
+		panes=new int[2][size[0]][size[1]][2];
+		for(int i=0;i<shape.length;i++)
 		{
-			panes[dir][x1+step[0]*j][y1+step[1]*j][0]=kind;
-			panes[dir][x1+step[0]*j][y1+step[1]*j][1]=c;
+			objects[shape[i].loc[0]][shape[i].loc[1]]=i+1;
 		}
-		System.out.println(dir+", "+length+","+x1+","+y1);
+		for(int i=0;i<l;i++)
+		{
+			int dir=rand.nextInt(2),
+					kind=rand.nextInt(3);
+			if(kind==0)kind=-1;
+			int[]step=new int[2];
+			step[1-dir]=1;
+			int length=size[1-dir]-(int)Math.sqrt( rand.nextInt(size[1-dir]*size[1-dir])-1);
+			System.out.println("size0="+size[0]+", size1="+size[1]+"dir="+dir+", length="+length);
+			int x1=rand.nextInt(size[0]-step[0]*(length-1)),
+					y1=rand.nextInt(size[1]-step[1]*(length-1)),
+							c=rand.nextInt(colors.length);
+			System.out.println("x="+x1+", y="+y1);
+			for(int j=0;j<length;j++)
+			{
+				panes[dir][x1+step[0]*j][y1+step[1]*j][0]=kind;
+				panes[dir][x1+step[0]*j][y1+step[1]*j][1]=c;
+			}
+			System.out.println(dir+", "+length+","+x1+","+y1);
+		}
+	} finally {
+		model_lock.unlock();
 	}
 }
 
 
 	public void draw(Graphics g, int pov, int state) 
 	{
-		int[]origin=shape[pov].loc;
-		int k=0;
-		int dir=shape[pov].orientation;
-		double min=0,max=1;
-		boolean mirror=false;
-		System.out.println(shape[0].loc[0]+","+shape[0].loc[1]);
-		boolean success=(state>0);
-		if(state<1)
-		{ 
-			int s=shape[1].move(1,this);
-			success=(s>0);
-			if(!success)
-			{
-			draw(g,origin,dir,k,min,max,mirror,colors[0],1);
-			
-			if(state<0)
+		model_lock.lock();
+		try {
+			int[]origin=shape[pov].loc;
+			int k=0;
+			int dir=shape[pov].orientation;
+			double min=0,max=1;
+			boolean mirror=false;
+			System.out.println(shape[0].loc[0]+","+shape[0].loc[1]);
+			boolean success=(state>0);
+			if(state<1)
 			{ 
-				g.setColor(Color.pink);
+				int s=shape[1].move(1,this);
+				success=(s>0);
+				if(!success)
+				{
+				draw(g,origin,dir,k,min,max,mirror,colors[0],1);
+				
+				if(state<0)
+				{ 
+					g.setColor(Color.pink);
+					g.setFont(new Font("SansSerif", Font.BOLD, 55));
+				    if(state==-1)    g.drawString("BOINK", 100, height/2);
+				    else if(state==-2 )  g.drawString("BOINK",width- 300, height/2);
+				    else   g.drawString("BOINK", width/2-100, height/2);
+				   
+				}
+				}
+			}
+			if( success)	{
+				g.setColor(shape[1].color);
+				g.fillRect(0, 0, width, height);
+				g.setColor(Color.white);
 				g.setFont(new Font("SansSerif", Font.BOLD, 55));
-			    if(state==-1)    g.drawString("BOINK", 100, height/2);
-			    else if(state==-2 )  g.drawString("BOINK",width- 300, height/2);
-			    else   g.drawString("BOINK", width/2-100, height/2);
-			   
+				
+			    g.drawString("SUCCESS!", width/2-100, height/2);
+			        g.setColor(Color.black);g.setFont(new Font("SansSerif", Font.BOLD, 55));
+			        g.drawString("SUCCESS!", width/2-90, height/2-10);
+			        
+			        g.setFont(new Font("SansSerif", Font.BOLD, 30));
+			        g.drawString("On to Level "+(level+1), width/2-90, height/2+50);
+			       this.reset(level+1);
+			      
 			}
-			}
-		}
-		if( success)	{
-			g.setColor(shape[1].color);
-			g.fillRect(0, 0, width, height);
-			g.setColor(Color.white);
-			g.setFont(new Font("SansSerif", Font.BOLD, 55));
 			
-		    g.drawString("SUCCESS!", width/2-100, height/2);
-		        g.setColor(Color.black);g.setFont(new Font("SansSerif", Font.BOLD, 55));
-		        g.drawString("SUCCESS!", width/2-90, height/2-10);
-		        
-		        g.setFont(new Font("SansSerif", Font.BOLD, 30));
-		        g.drawString("On to Level "+(level+1), width/2-90, height/2+50);
-		       this.reset(level+1);
-		      
+			
+			Interface.state=0;
+		//	 Graphics2D g2= (Graphics2D)g;
+		//	 g2.fill(new Ellipse2D.Double(0,0,720,720));
+		} finally {
+			model_lock.unlock();
 		}
-		
-		
-		Interface.state=0;
-	//	 Graphics2D g2= (Graphics2D)g;
-	//	 g2.fill(new Ellipse2D.Double(0,0,720,720));
 	}
 
 	private void draw(Graphics g, int[] origin,int dir, int level, double min, double max, boolean mirror,Color col, double visibility) 
