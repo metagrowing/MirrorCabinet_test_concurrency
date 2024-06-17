@@ -20,13 +20,12 @@ public class Interface extends JFrame
 	{
 		Random rand=new Random();
 		Cabinet room=new Cabinet(rand.nextInt(10)+1,rand.nextInt(10)+1,5,0,0,0);//18
-		//room.addHor(5,8,3,1);
-		//room.addHor(5, 5,3, 2);
-        Interface frame=new Interface(room,0);
+		Interface frame = new Interface(room,0);
         
         
         
         frame.setVisible(true); 
+        new Stressor().flood(frame);
     /*  while(true){// if(false){// 
         try {
 			Thread.sleep(1000);
@@ -61,47 +60,8 @@ public class Interface extends JFrame
 
             @Override
             public void keyPressed(KeyEvent e) {
-                move(e);
+                move(e, cabinet);
             }
-
-            private void move(KeyEvent e)
-            {boolean eligble=false;
-            	 switch (e.getKeyCode()) 
-            	 {
-                 case KeyEvent.VK_UP:
-                 state=    room.shape[0].moveForward(0, room);
-                 eligble=true;
-                     break;
-                 case KeyEvent.VK_DOWN:
-                state=	  room.shape[0].moveBack(0, room);
-                eligble=true;
-                     break;
-                 case KeyEvent.VK_RIGHT:
-                	state=  room.shape[0].moveRight(0, room);
-                	 eligble=true;
-                      break;
-                 case KeyEvent.VK_LEFT:
-               	state=  room.shape[0].moveLeft(0, room);
-                eligble=true; 
-                     break;
-                 case KeyEvent.VK_X:
-                	 room.reset(room.level);
-                	 eligble=true;
-                	 break;
-                 case KeyEvent.VK_1:
-                	 room.shape[0].turn(2);
-                	 eligble=true;
-                	 break;
-                 case KeyEvent.VK_3:
-                	 room.shape[0].turn(1);
-                	 eligble=true;
-                	 break;
-                
-            	 }  
-            	// if(eligble)
-            	 repaint();
-            	 
-			}
 
 			@Override
             public void keyReleased(KeyEvent e) {
@@ -112,6 +72,53 @@ public class Interface extends JFrame
 		
 		   
 	}
+
+    public void testmove(KeyEvent e) {
+        move(e, cabinet);
+    }
+ 
+	private void move(KeyEvent e, Cabinet room) {
+		room.model_lock.lock();
+		try {
+			boolean eligble = false;
+			switch (e.getKeyCode()) {
+			case KeyEvent.VK_UP:
+				state = room.shape[0].moveForward(0, room);
+				eligble = true;
+				break;
+			case KeyEvent.VK_DOWN:
+				state = room.shape[0].moveBack(0, room);
+				eligble = true;
+				break;
+			case KeyEvent.VK_RIGHT:
+				state = room.shape[0].moveRight(0, room);
+				eligble = true;
+				break;
+			case KeyEvent.VK_LEFT:
+				state = room.shape[0].moveLeft(0, room);
+				eligble = true;
+				break;
+			case KeyEvent.VK_X:
+				room.reset(room.level);
+				eligble = true;
+				break;
+			case KeyEvent.VK_1:
+				room.shape[0].turn(2);
+				eligble = true;
+				break;
+			case KeyEvent.VK_3:
+				room.shape[0].turn(1);
+				eligble = true;
+				break;
+
+			}
+			// if(eligble)
+			repaint();
+		} finally {
+			room.model_lock.unlock();
+		}
+	}
+
 	
 	class MirrorPanel extends JPanel
 	{
